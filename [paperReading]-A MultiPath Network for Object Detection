@@ -23,7 +23,7 @@ COCO数据集与以往数据集的区别：
 3. 提供广泛不同尺度（scale）的图片。
 
 
-![图1：MultiPah的网络结构](http://upload-images.jianshu.io/upload_images/274952-46f1c256ec8ecf03.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![图1：MultiPah的网络结构](./images/1464789790666.jpg)
 对于一张测试的图片，首先整图丢进VGG-16 trunk卷积层得到各层的featuremap，然后对于图片上每个object proposal，用ROI-pooling layer提取多个层的feature进行卷积层的特征融合（此步即为作者所称的**skip connections**）。针对每个object proposal，将它的ROI分别放大1倍，1.5倍，2倍，4倍，并且用ROI-pooling layer来得到定长特征。分别feed到两个连续的fc层（fc5，fc6，此步即为作者所称的**foveal structure**）。之后fc层出来的得到的特征再连接到一起。那么每个proposal就得到一个4096x4的超长特征，然后接分类和定位的loss（这里的分类是针对MS COCO的评测标准来设计的loss，作者称为**integral loss**）。
 
 作者从使用Fast R-CNN目标检测器开始讨论，并测试了一些直觉的想法，如小目标检测、在上下文环境中进行目标检测，作者的目标是采用Fast R-CNN进行快速目标检测。
@@ -61,7 +61,7 @@ COCO数据集与以往数据集的区别：
 
 >#Selective Search-选择性搜索
 >留待，以后扒
->![selective search proposal ](http://i.imgur.com/cBm4V5f.png)
+>![selective search proposal ](./images/1464789799840.jpg)
 >如何判别哪些region属于同一个物体？这个问题找不到一个统计的答案：
 - 对于图b，我们可以**根据颜色**来分开两只猫，但是不能根据纹理来分开。
 - 对于图c，我们可以**根据纹理**来找到变色龙，但是不能根据颜色来找到。
@@ -78,7 +78,7 @@ COCO数据集与以往数据集的区别：
 
 >#MultiScale
 >由于图像的物体之间存在着层级关系，所以Selective Search用到了Multiscale的思想。Select Search在不同尺度下能够找到不同的物体。这里说的**不同尺度**，不是指通过对原图片进行缩放，或者改变窗口大小的意思。而是指，**通过分割的方法将图片分成很多个region，并且用合并（grouping）的方法将region聚合成大的region，重复该过程直到整张图片变成一个最大的region**。这个过程就能够生成multiscale的region了，而且，也符合了上面**物体之间可能具有层级关系**的假设。
->![](http://i.imgur.com/rVuYX8g.png)
+>![](./images/1464789814755.jpg)
 >- 左图，以不同尺度找到多个物体，右图，以不同尺度找到不同大小的目标
 >
 >#策略多样化（Diversification Strategies）
@@ -89,7 +89,7 @@ COCO数据集与以往数据集的区别：
 >
 >这里不是太确定，但是按照作者描述以及个人理解，觉得确实就是随机地打分。
 >#使用Selective Search进行Object Recogntion
-![](http://upload-images.jianshu.io/upload_images/274952-56df752d5925a545.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)](http://i.imgur.com/hu5G1TI.png)
+![](./images/1464789802287.jpg)
 大致流程如上图。
 >用的是传统的“特征+SVM”方法：
 >特征用了HoG和BoW

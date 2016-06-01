@@ -1,0 +1,130 @@
+#读书笔记：A MultiPath Network for Object Detection
+tag:学习笔记;object detection;
+author:Sergey Zagoruyko 
+link:[here](http://120.52.73.75/arxiv.org/pdf/1604.02135.pdf)
+
+###摘要
+作者对Fast R-CNN做了三个方面的改进
+>- skip Connection：使检测器（detector）可以访问多个网络层的特征。
+- foveal struture：考虑整个图像中目标候选的上下文。
+- integral loss function：一致的网络调整用于改善目标定位。
+
+三方面的改进使得网络中的信息（不仅仅是多个网络层中的信息，还包括多个目标视角）可以有多个路径流动，所以作者称之为“MultiPath”
+
+###1.概述
+作者称目标分类与目标检测基于cnn与现有的视觉识别数据集已有很大的发展。现代目标检测基于由Girshick等人建立的范式，在Region CNNs有卓越的进步：**首先，目标候选算法产生候选区域，然后，一个CNN分类每一个建议区域。**
+
+一句话之COCO：
+>MS COCO数据集：数据集包含300K图像，其涵盖80个种类的完整的分割目标实例。平均每张图片包含7个目标实例。
+
+COCO数据集与以往数据集的区别：
+1. 目标图像很少为标志性的图片，多为非标准（何为标准？）而且重度重叠。
+2. 测量标准鼓励更高的准确率。
+3. 提供广泛不同尺度（scale）的图片。
+
+
+![图1：MultiPah的网络结构](http://upload-images.jianshu.io/upload_images/274952-46f1c256ec8ecf03.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+对于一张测试的图片，首先整图丢进VGG-16 trunk卷积层得到各层的featuremap，然后对于图片上每个object proposal，用ROI-pooling layer提取多个层的feature进行卷积层的特征融合（此步即为作者所称的**skip connections**）。针对每个object proposal，将它的ROI分别放大1倍，1.5倍，2倍，4倍，并且用ROI-pooling layer来得到定长特征。分别feed到两个连续的fc层（fc5，fc6，此步即为作者所称的**foveal structure**）。之后fc层出来的得到的特征再连接到一起。那么每个proposal就得到一个4096x4的超长特征，然后接分类和定位的loss（这里的分类是针对MS COCO的评测标准来设计的loss，作者称为**integral loss**）。
+
+作者从使用Fast R-CNN目标检测器开始讨论，并测试了一些直觉的想法，如小目标检测、在上下文环境中进行目标检测，作者的目标是采用Fast R-CNN进行快速目标检测。
+
+作者使用DeepMask目标建议
+
+>#DeepMask简介
+>论文题目：Learning to Segment Object Candidates论文地址：[http://arxiv.org/abs/1506.06204](http://arxiv.org/abs/1506.06204)
+>以后扒
+>论文大体内容：作者为了实现识别出更多的图像对象，提出一个图像识别对象的新方法DeepMask。这个基于卷积网络的新方法能够比现阶段最高水平的结果好，能够达到更高的召回以及更好的识别准确率。
+>1. 目前图像的对象识别主要有关键的两个步骤：
+        1. 检测出所有候选对象；
+        2. 将这些候选对象通过对象分类器进行筛选，产生最后的结果。
+前人的实验证明使用这两个步骤能够比较快且准确地识别出图片里的对象。
+2. 作者提出基于卷积网络（discriminative convolutional network）的新方法，也可以分为两步：
+        1. 得到图像的一部分，给候选对象涂色（识别候选对象）；
+        2. 预测该部分图像是一个完整对象的可能性。该方法还能生成训练集中没有的对象类别。
+作者识别图片对象是需要应用于Facebook的，希望能够识别图片中各个位置的对象，所以新方法需实现三个目标：
+        1. 高的召回率（这里的recall=正确识别的对象个数/实际的对象个数）；
+        2. 使用较少的部分就能达到高召回率；
+        3. 在高召回的同时，准确率也得高。
+作者使用了ConvNets模型，对方法的两步分别使用单独的卷积网络。
+一个训练样本包括三个部分：
+        1. 图像的RGB；
+        2. 图像的涂色情况（每个像素做一个标记，1代表涂色，0代表不涂色，存储第一步的结果）；
+        3. 一个标志，代表图像是否包含一个完整对象（第二步的结果，1代表该图像完整的包含对象，并且对象在图像中心部位）。
+为了提高模型的鲁棒性，作者会将图像进行抖动、平移、缩放等（貌似所有图像识别之类的都需要这样做）。
+作者使用MS COCO[2]的数据进行训练（训练过程在Nvidia Tesla K40m的机器上花了5天时间），测试集使用MS COCO和PASCAL VOC[3]，实验环境都是使用Torch7[4]，评价准确率的标准是Intersection over Union（IoU）
+        IoU=（分割结果 ∩ Ground-truth（实际结果）） / （分割结果 ∪ Ground-truth）
+另外也使用了平均的召回率（average recall）进行对比，最后得出的结果相比目前的最高水平胜出一大截。
+>
+>详情见[1]
+
+作者使用DeepMask的建议结合MultiPath分类器在COCO数据集上得到的平均精准率为33.5%。与Fast RCNN with Selective Search Proposal相比（ap：19.3，66%），小目标对象上提升4倍。
+
+>#Selective Search-选择性搜索
+>留待，以后扒
+>![selective search proposal ](http://i.imgur.com/cBm4V5f.png)
+>如何判别哪些region属于同一个物体？这个问题找不到一个统计的答案：
+- 对于图b，我们可以**根据颜色**来分开两只猫，但是不能根据纹理来分开。
+- 对于图c，我们可以**根据纹理**来找到变色龙，但是不能根据颜色来找到。
+- 对于图d，我们将车轮归类成车的一部分，既不是因为颜色相近，也不是因为纹理相近，而是因为车轮附加在车的上面（个人理解是因为车“包裹”这车轮）所以，我们需要用多种策略结合，才有可能找到图片中的所有物体。**个人认为也是一种层次关系**。
+- 对于图a，说明了**物体之间可能具有层级关系**，或者说一种**嵌套的关系**(勺子在锅里面，锅在桌子上)。
+
+>#Selective Search方法简介
+- 使用[Efficient GraphBased Image Segmentation](http://cs.brown.edu/~pff/segment/)中的方法来得到region
+- 得到所有region之间两两的相似度
+- 合并最像的两个region
+- 重新计算新合并region与其他region的相似度
+- 重复上述过程直到整张图片都聚合成一个大的region
+>使用一种随机的计分方式给每个region打分，按照分数进行ranking，取出top k的子集，就是selective search的结果。
+
+>#MultiScale
+>由于图像的物体之间存在着层级关系，所以Selective Search用到了Multiscale的思想。Select Search在不同尺度下能够找到不同的物体。这里说的**不同尺度**，不是指通过对原图片进行缩放，或者改变窗口大小的意思。而是指，**通过分割的方法将图片分成很多个region，并且用合并（grouping）的方法将region聚合成大的region，重复该过程直到整张图片变成一个最大的region**。这个过程就能够生成multiscale的region了，而且，也符合了上面**物体之间可能具有层级关系**的假设。
+>![](http://i.imgur.com/rVuYX8g.png)
+>- 左图，以不同尺度找到多个物体，右图，以不同尺度找到不同大小的目标
+>
+>#策略多样化（Diversification Strategies）
+有两种多样化方法，一个是针对样本的颜色空间，另一个针对合并时候计算相似性的策略。
+- 针对样本颜色空间的方法：采用了8种颜色空间，包括RGB，灰度图，Lab，等等
+- 针对合并相似性的方法：采用了4种相似性。颜色相似性（对应Figure1a的情况），纹理相似性（对应Figure1b的情况），小物体先合并原则，物体之间的相容性（对应Figure1d的情况）
+>#对region打分
+>
+>这里不是太确定，但是按照作者描述以及个人理解，觉得确实就是随机地打分。
+>#使用Selective Search进行Object Recogntion
+![](http://upload-images.jianshu.io/upload_images/274952-56df752d5925a545.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)](http://i.imgur.com/hu5G1TI.png)
+大致流程如上图。
+>用的是传统的“特征+SVM”方法：
+>特征用了HoG和BoW
+>SVM用的是SVM with a histogram intersection kernel
+训练时候：正样本：groundtruth，负样本，seletive search出来的region中overlap在20%-50%的。
+迭代训练：一次训练结束后，选择分类时的false positive放入了负样本中，再次训练
+
+>#评估（evalutation）
+用数据和表格说明了文中的方法有效。这部分写了很长，具体不表。
+
+#2. 相关工作
+目标检测是计算机视觉中一个基础并且重度搜索的任务，滑动窗口范式目前依然是目前的主流之选，尤其在行人检测与人脸识别。
+- 上下文
+>Sermanet et al.在行人检测系统中使用两个连续上下文的区别。
+>C.Szegedy et al.除使用指定区域的特征之处，还使用整个图像的特征来改善区域分类结果。
+>He等人，通过在分类器使用不同size的池化区域之前聚合CNN的特征来实现context信息。
+
+作者所提结构使用四个上下文（context）信息在中心窝结构中
+- skip connection
+>Sermanet等人提出使用“MultiStage”分类器，并在行人检测系统中证明其有效性。
+>类似于这样的skip结构最近较为流行应于语义分割。
+
+- object proposal
+>目标建议一般多使用低水平分组信息，如边缘、超像素
+>
+- 分类器
+
+
+
+
+###参考文献
+[1]   [John159151的专栏 #Paper Reading# Learning to Segment Object Candidates](http://www.voidcn.com/blog/John159151/article/p-4922418.html)
+[2]  [http://mscoco.org/](http://mscoco.org/)
+[3]  [http://host.robots.ox.ac.uk/pascal/VOC/](http://host.robots.ox.ac.uk/pascal/VOC/)
+[4] [http://torch.ch/](http://torch.ch/)
+[5] [在路上：论文笔记 《Selective Search for Object Recognition》](http://zhangliliang.com/2014/07/17/paper-note-selective-search/)，[项目网址](http://koen.me/research/selectivesearch/)
+###个人梦话
+现在做的事是让机器描述一张图片/文字，那么随着加强机器对人类（行为、意图）的理解，如果有比较大的突破，那么AI就真的存在了？

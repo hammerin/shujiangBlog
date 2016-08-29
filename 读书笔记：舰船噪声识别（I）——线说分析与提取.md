@@ -18,10 +18,35 @@ grammar_cjkRuby: true
 >- 通常使用灰阶图来显示**短时谱图**，其中灰阶的**深浅**表示谱**强度**。
 >- 平面x轴为时间，y轴为频率
 >- 舰船辐射噪声短时谱图的特点是**噪声的高低频段的谱强度相关大**，**动态范围**一般有**40dB**以上.
+>![](http://2.im.guokr.com/WNg3e3xNwBnTGhMKF1RxMOaY2E0ITr9dwj7NvPAld3dRBAAATwIAAFBO.png?imageView2/1/w/605/h/324)
+
 
 作者利用舰船辐射噪声符合于局部平稳stochastic process的特点，把时谱拆成**独立的平稳谱**与**慢时变非平稳谱**两部分。
-基于fourier变换，舰船辐射噪声可以用下面的公式得到。
 
-  ```mathjax
-  \Gamma(z) = \int_0^\infty t^{z-1}e^{-t}dt\,.
-  ```
+时变功率谱定义自相关函数的fourier transfer（式1）以及基于fourier变换，舰船辐射噪声可以用下面的公式得到（式2）
+
+![](http://ww4.sinaimg.cn/large/4542e63ejw1f7adbnhxzmj20pq052mxg.jpg)
+式2中gx为平稳谱，m x f（）函数为非平稳谱，m函数本身为时变调制深度谱，反映相对调制的强弱。
+
+>- 功率谱表示了信号功率随着频率的变化关系 。常用于功率信号（区别于能量信号）的表述与分析，其曲线（即功率谱曲线）一般横坐标为频率，纵坐标为功率。
+>由于功率没有负值，所以功率谱曲线上的纵坐标也没有负数值，功率谱曲线所覆盖的面积在数值上等于信号的总功率（能量）。
+>![](http://baike.baidu.com/pic/%E5%8A%9F%E7%8E%87%E8%B0%B1/6463147/0/9f510fb30f2442a75c7ba88fd243ad4bd11302a6?fr=lemma&ct=single)
+>- 时变功率谱则是时间函数与谱密度函数的卷积了
+>
+>-  wiki：在物理学中，信号通常是波的形式，例如电磁波、随机振动或者声波。当波的频谱密度乘以一个适当的系数后将得到每单位频率波携带的功率，这被称为信号的功率谱密度（power spectral density, PSD）或者谱功率分布（spectral power distribution, SPD）。功率谱密度的单位通常用每赫兹的瓦特数（W/Hz）表示，或者使用波长而不是频率，即每纳米的瓦特数（W/nm）来表示。
+
+
+>舰船识别的难度在于舰船分类并非按照发出的噪声特征来分类，而是按功能、吨位、用途来分，如商船、水面舰等，而这些类型与噪声之间没有百分之百的联系，且存在的关联性也未知。
+
+本文的识别工作利用舰船噪声的识别特征+特定舰的记忆学习
+本文的工作路线：
+
+![](http://ww2.sinaimg.cn/large/4542e63ejw1f7aj8mkkuwj20m706nq3v.jpg)
+
+
+  
+  
+  
+  
+Contact GitHub API Training Shop Blog About
+© 2016 GitHub, Inc. Terms Privacy Security Status Help
